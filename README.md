@@ -1,7 +1,7 @@
 # DSC232R: Group Project - Spring 2025
 Created by: Jillian O'Neel (A69037969) <br>
 This project contains code developed for the Spring 2025 DSC232R Group Project.
-## Milestone 1: The Data
+## Introduction
 The [“100 Million+ Steam Reviews”](https://www.kaggle.com/datasets/kieranpoc/steam-reviews/data) dataset contains over 113 million reviews submitted by users of the PC games digital distribution platform, Steam. This platform allows users to purchase, download, and play PC video games, as well as engage in community activities such as leaving reviews/ratings. This dataset contains complete review text as well as rich metadata about the reviews and their authors. This dataset is combined with the ["Steam Games"](https://www.kaggle.com/datasets/artermiloff/steam-games-dataset) dataset which contains additional metadata about the games themselves (such as name, release date, price, genre, etc.).
 ## Milestone 2: Data Exploration & Initial PreProcessing
 The “100 Million+ Steam Reviews” dataset is provided as a .zip file (containing a .csv file) and the "Steam Games" dataset is provided as a .csv file. For ease of use, files were downloaded from Kaggle and uploaded to Google Cloud Storage, where they are accessible via a public url. Using `!wget`, the files are pulled from the public urls into the specified directories and the .zip file is extracted using `!unzip`. The next section of code imports the necessary libraries and establishes the spark session. Finally, each file is read into a spark dataframe and pre-processed as described below.
