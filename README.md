@@ -17,11 +17,56 @@ url2 = ("https://storage.googleapis.com/dsc232r-group-project-data/games.csv")
 reviews_df = sc.read.csv("reviews.csv", header=True, inferSchema=True)
 games_df = sc.read.csv("games.csv", header=True, inferSchema=True)
 ```
-# Moves games.csv into specified directory
-!mv games.csv /home/joneel/joneel/Group_Project/raw_data
 ### 2.b. PreProcessing
 #### 2.b.i. Dataset #1: Steam Reviews
-On the `reviews_df` spark dataframe, `.printSchema()` is used to explore the features provided for each review and a count of all reviews is taken. There are two columns related to the Chinese gaming market that won't be useful for this analyis so they are removed using `.drop`. Additionally, it is identified that the dataset contains reviews in many different languages. For the purposes of this work, English language text analysis will be performed on the reviews; therefore, the data is filtered to include only the reviews in English and a new count is taken. Next, there are three unique identifier attributes that are vital for the analysis as well as the review itself. Rows with nulls values in any of these columns are dropped and rows with duplicate `recommendationid` values are also dropped. Upon review, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to their appropriate datatypes. A brief analysis of the time related attributes indicated some incorrect dates so any rows containing `timestamp` values older than the launch date of Steam (September 12, 2003) are removed. Finally the processed reviews dataframe is split into two dataframes: one containing all of the metadata (`reviews_df_processed_metadata`) and one containing only the unique identifiers for the review and game plus the review (`reviews_df_processed_reviews`). Future work will include processing the reviews for Natural Language Processing (NLP).
+The following post-processing was completed on the `reviews_df` spark dataframe.
+```
+# Dropping columns not useful for analysis and nulls/duplicates
+reviews_df = reviews_df.drop("hidden_in_steam_china", "steam_china_location")
+reviews_df_processed = reviews_df.filter(reviews_df.language == 'english')
+reviews_df_processed = reviews_df_processed.na.drop(subset=["recommendationid", "appid", "author_steamid", "review"])
+reviews_df_processed = reviews_df_processed.dropDuplicates(subset=["recommendationid"])
+
+# Casting to correct datatypes
+reviews_df_processed = reviews_df_processed.withColumn("author_num_games_owned", f.col("author_num_games_owned").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("author_num_reviews", f.col("author_num_reviews").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("author_playtime_forever", f.col("author_playtime_forever").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("author_playtime_last_two_weeks", f.col("author_playtime_last_two_weeks").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("author_playtime_at_review", f.col("author_playtime_at_review").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("author_last_played", f.from_unixtime(f.col("author_last_played")).cast("timestamp"))
+reviews_df_processed = reviews_df_processed.withColumn("timestamp_created", f.from_unixtime(f.col("timestamp_created")).cast("timestamp"))
+reviews_df_processed = reviews_df_processed.withColumn("timestamp_updated", f.from_unixtime(f.col("timestamp_updated")).cast("timestamp"))
+reviews_df_processed = reviews_df_processed.withColumn("voted_up", f.col("voted_up").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("votes_up", f.col("votes_up").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("votes_funny", f.col("votes_funny").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("weighted_vote_score", f.col("weighted_vote_score").cast("double"))
+reviews_df_processed = reviews_df_processed.withColumn("comment_count", f.col("comment_count").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("steam_purchase", f.col("steam_purchase").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("received_for_free", f.col("received_for_free").cast("integer"))
+reviews_df_processed = reviews_df_processed.withColumn("written_during_early_access", f.col("written_during_early_access").cast("integer"))
+
+# Filter review dates from before September 12, 2003 (when Steam was launched)
+reviews_df_processed = reviews_df_processed.filter(reviews_df_processed.timestamp_created >= '2003-09-12')
+reviews_df_processed = reviews_df_processed.filter(reviews_df_processed.timestamp_updated >= '2003-09-12')
+
+# Fixing Boolean columns
+reviews_df_processed = reviews_df_processed.filter((reviews_df_processed["steam_purchase"] == 0) | (reviews_df_processed["steam_purchase"] == 1))
+reviews_df_processed = reviews_df_processed.filter((reviews_df_processed["received_for_free"] == 0) | (reviews_df_processed["received_for_free"] == 1))
+reviews_df_processed = reviews_df_processed.filter((reviews_df_processed["written_during_early_access"] == 0) |
+                                                   (reviews_df_processed["written_during_early_access"] == 1))
+reviews_df_processed = reviews_df_processed.filter((reviews_df_processed["voted_up"] == 0) | (reviews_df_processed["voted_up"] == 1))
+reviews_df_processed = reviews_df_processed.withColumnRenamed("voted_up","positive_review")
+
+# Cast to boolean
+reviews_df_processed = reviews_df_processed.withColumn("steam_purchase", f.col("steam_purchase").cast("boolean"))
+reviews_df_processed = reviews_df_processed.withColumn("received_for_free", f.col("received_for_free").cast("boolean"))
+reviews_df_processed = reviews_df_processed.withColumn("written_during_early_access", f.col("written_during_early_access").cast("boolean"))
+reviews_df_processed = reviews_df_processed.withColumn("positive_review", f.col("positive_review").cast("boolean"))
+
+# Splits data into two dataframes, 1 with all the review metadata and 1 with only the recommendationid + appid + review
+reviews_df_processed_metadata = reviews_df_processed.drop("review")
+reviews_df_processed_reviews = reviews_df_processed.select("recommendationid", "appid", "author_steamid", "review")
+```
 #### 2.b.ii. Dataset #2: Steam Games
 On the `games_df` spark dataframe, `.printSchema()` is used to explore the features provided for each game and a count of all games is taken. For this analysis, we will only be using game metadata that describes the type of game; therefore many columns not relevant are dropped. Additionally, any rows with null values or duplicate values in the unique identifier for the game (e.g., `appid`) are removed. Just like the review dataframe, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to the correct datatypes.
 #### 2.b.iii. Verifying the Compatability of the Datasets
@@ -39,6 +84,7 @@ In the final section of this code, a Random Forest Regressor model is establishe
 ### 3.a. Data Exploration
 ### 3.b. PreProcessing
 #### 3.b.i. Dataset #1: Steam Reviews
+On the `reviews_df` spark dataframe, `.printSchema()` is used to explore the features provided for each review and a count of all reviews is taken. There are two columns related to the Chinese gaming market that won't be useful for this analyis so they are removed using `.drop`. Additionally, it is identified that the dataset contains reviews in many different languages. For the purposes of this work, English language text analysis will be performed on the reviews; therefore, the data is filtered to include only the reviews in English and a new count is taken. Next, there are three unique identifier attributes that are vital for the analysis as well as the review itself. Rows with nulls values in any of these columns are dropped and rows with duplicate `recommendationid` values are also dropped. Upon review, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to their appropriate datatypes. A brief analysis of the time related attributes indicated some incorrect dates so any rows containing `timestamp` values older than the launch date of Steam (September 12, 2003) are removed. Finally the processed reviews dataframe is split into two dataframes: one containing all of the metadata (`reviews_df_processed_metadata`) and one containing only the unique identifiers for the review and game plus the review (`reviews_df_processed_reviews`). Future work will include processing the reviews for Natural Language Processing (NLP).
 #### 3.b.ii. Dataset #2: Steam Games
 #### 3.b.iii. Verifying the Compatability of the Datasets
 #### 3.b.iv. Text Processing.
