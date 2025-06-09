@@ -111,7 +111,176 @@ joined.show()
 reviews_df_processed_metadata = reviews_df_processed_metadata.drop("game")
 ```
 #### 2.b.iv. Text Processing
+The review text of the top 100 most reviewed games was processed using a tokenizer and then `Word2vec`.
+```
+# Filtering Data to include only the Top 100 Most-Reviewed Games
+review_counts = reviews_df_processed_metadata.groupBy("appid").count()
+top_100_games = review_counts.orderBy(f.col("count").desc()).limit(100)
+top_100_appids = [row.appid for row in top_100_games.collect()]
+filtered_review_df = reviews_df_processed_reviews.filter(reviews_df_processed_reviews.appid.isin(top_100_appids))
+
+# Tokenize Reviews
+tokenizer = RegexTokenizer(inputCol='review', outputCol='tokens', pattern='\\W')
+reviews_tokenized_df = tokenizer.transform(filtered_review_df)
+# Remove common english "stop words"
+stopword_remover = StopWordsRemover(inputCol="tokens", outputCol="filtered_tokens")
+reviews_tokenized_df = stopword_remover.transform(reviews_tokenized_df)
+# Drop reviews that are less than 10 tokens long
+reviews_tokenized_df = reviews_tokenized_df.filter(size(reviews_tokenized_df.tokens) >= 10)
+
+# Use Word2Vec to vectorize the reviews into vectors of size 50
+word2vec = Word2Vec(vectorSize=50, minCount=1, inputCol='filtered_tokens', outputCol='review_embeddings')
+word2vec_model = word2vec.fit(reviews_tokenized_df)
+reviews_embeddings_df = word2vec_model.transform(reviews_tokenized_df)
+```
+Then average vectors for each game and author were created using the following code.
+```
+# Functions to average vectors together
+def avg_vectors(vectors):
+    if vectors:
+        return np.mean(vectors, axis=0).tolist()
+    else:
+        return []
+
+avg_udf = udf(avg_vectors, ArrayType(FloatType()))
+
+# Group by game (appid) and calculate average vectorized review
+game_embeddings_df = (
+    reviews_embeddings_df
+    .groupBy("appid")
+    .agg(collect_list("review_embeddings").alias("all_review_embeddings"))
+    .withColumn("game_embedding", avg_udf("all_review_embeddings"))
+    .select("appid", "game_embedding")
+)
+
+# Group by review author (author_steamid) and calculate average vectorized review
+author_embeddings_df = (
+    reviews_embeddings_df
+    .groupBy("author_steamid")
+    .agg(collect_list("review_embeddings").alias("all_review_embeddings"))
+    .withColumn("author_embedding", avg_udf("all_review_embeddings"))
+    .select("author_steamid", "author_embedding")
+)
+```
 ### 2.c. Data Exploration
+Summary statistics and exploratory plots were made using the processed data and the following code.
+```
+# Total # Reviews, Total # Games Reviewed, and Total # Unique Reviewers
+print(f"Number of Reviews: {reviews_df_processed_metadata.count()}")
+num_games_reviewed = reviews_df_processed_metadata.select("appid").distinct().count()
+print(f"Number of Games Reviewed: {num_games_reviewed}")
+num_unique_reviewers = reviews_df_processed_metadata.select("author_steamid").distinct().count()
+print(f"Number of Unique Reviewers: {num_unique_reviewers}")
+# Date range of Reviews
+print("Date Range of Reviews: ")
+reviews_df_processed_metadata.select(f.min("timestamp_created").alias("earliest_review"),
+                                     f.max("timestamp_created").alias("latest_review")).show()
+
+# Review Volume Over Time
+# Reduce data to pandas dataframe
+reviews_by_month = reviews_df_processed_metadata.withColumn("year_month", f.date_format("timestamp_created", "yyyy-MM"))
+review_counts_by_month = reviews_by_month.groupBy("year_month").count().orderBy("year_month")
+review_counts_pd = review_counts_by_month.toPandas()
+# Line plot - Review Volume Over Time
+plt.figure(figsize=(12,6))
+plt.plot(review_counts_pd["year_month"], review_counts_pd["count"], marker="o")
+plt.xticks(ticks=review_counts_pd.index[::6], labels=review_counts_pd["year_month"][::6], rotation=45, ha="right")
+plt.xlabel("Month")
+plt.ylabel("Number of Reviews")
+plt.title("Monthly Review Volume Over Time")
+plt.tight_layout()
+plt.show()
+
+# Plot Most-Reviewed Games (Top 10) - Bar Chart
+# Reduce data to pandas dataframe
+review_counts = reviews_df_processed_metadata.groupBy("appid").count()
+review_counts_named = review_counts.join(games_df_processed.select("appid", "name"), on="appid", how="left")
+top_10_games = review_counts_named.orderBy(f.col("count").desc()).limit(10)
+top_10_games_pd = top_10_games.toPandas()
+# Plot bar chart
+plt.figure(figsize=(10,6))
+sns.barplot(data=top_10_games_pd, x="name", y="count")
+plt.xticks(rotation=45, ha="right")
+plt.title("Top 10 Most Reviewed Games")
+plt.xlabel("Game")
+plt.ylabel("Number of Reviews")
+plt.tight_layout()
+plt.show()
+
+# Plot Most Prolific Reviewers (Top 10) - Bar Chart
+# Reduce data to pandas dataframe
+reviewer_counts = reviews_df_processed_metadata.groupBy("author_steamid").count()
+top_10_reviewers = reviewer_counts.orderBy(f.col("count").desc()).limit(10)
+top_10_reviewers_pd = top_10_reviewers.toPandas()
+# Plot bar chart
+plt.figure(figsize=(10,6))
+sns.barplot(data=top_10_reviewers_pd, x="author_steamid", y="count")
+plt.xticks(rotation=45, ha="right")
+plt.title("Top 10 Most Prolific Reviewers")
+plt.xlabel("Author's Steam ID")
+plt.ylabel("Number of Reviews")
+plt.tight_layout()
+plt.show()
+
+# Top 10 Best & Worst Reviewed Games
+# Reduce data to pandas dataframe
+review_stats = reviews_df_processed_metadata.withColumn("positive_review", f.col("positive_review").cast("integer")) \
+                    .groupBy("appid") \
+                    .agg(
+                        f.avg("positive_review").alias("positive_ratio"),
+                        f.count("*").alias("total_reviews")
+                    )
+review_stats_filtered = review_stats.filter("total_reviews >= 10000")
+review_stats_named = review_stats_filtered.join(games_df_processed.select("appid", "name"), on="appid", how="left")
+review_stats_named = review_stats_named.filter((review_stats_named.name != "None") & (review_stats_named.name.isNotNull()))
+top_10_best_games = review_stats_named.orderBy("positive_ratio", ascending=False).limit(10)
+top_10_best_games_pd = top_10_best_games.toPandas()
+top_10_worst_games = review_stats_named.orderBy("positive_ratio", ascending=True).limit(10)
+top_10_worst_games_pd = top_10_worst_games.toPandas()
+
+# Plot bar chart - Top 10 Best Games
+plt.figure(figsize=(10,6))
+sns.barplot(data=top_10_best_games_pd, x="name", y="positive_ratio")
+plt.xticks(rotation=45, ha="right")
+plt.title("Top 10 Best Reviewed Games")
+plt.xlabel("Game")
+plt.ylabel("Proportion of Positive Reviews")
+plt.ylim(0.975, 1.0)
+plt.tight_layout()
+plt.show()
+
+# Plot bar chart - Top 10 Worst Games
+plt.figure(figsize=(10,6))
+sns.barplot(data=top_10_worst_games_pd, x="name", y="positive_ratio")
+plt.xticks(rotation=45, ha="right")
+plt.title("Top 10 Worst Reviewed Games")
+plt.xlabel("Game")
+plt.ylabel("Proportion of Positive Reviews")
+plt.tight_layout()
+plt.show()
+
+# Positivity Rate vs. Playtime at Time of Review
+# Reduce data to pandas dataframe
+reviews_binned = reviews_df_processed_metadata.withColumn("playtime_bin", f.floor(f.col("author_playtime_at_review") / 100) * 100)
+reviews_binned = reviews_binned.withColumn("is_positive_int", f.col("positive_review").cast("integer"))
+playtime_vs_positive = reviews_binned.groupBy("playtime_bin") \
+        .agg(
+            f.avg("is_positive_int").alias("positive_ratio"),
+            f.count("*").alias("review_count")
+        ) \
+        .orderBy("playtime_bin")
+playtime_vs_positive = playtime_vs_positive.limit(200)
+playtime_vs_positive_pd = playtime_vs_positive.toPandas()
+# Plot scatter plot - Positivity Rate vs. Playtime at Time of Review
+plt.figure(figsize=(10,6))
+plt.plot(playtime_vs_positive_pd["playtime_bin"], playtime_vs_positive_pd["positive_ratio"], marker="o")
+plt.xlabel("Playtime at Review (minutes, binned)")
+plt.ylabel("Proportion of Positive Reviews")
+plt.title("Positivity Rate vs. Playtime at Time of Review")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
 ### 2.d. Model #1 - Simple Recommender System
 ### 2.e. Model #2 - Predicting a Game's Popularity
 The goal of the first model is to predict a game's popularity with Steam users using other provided metadata about the game. For this model, popularity is the `positive_ratio` of the game amongst Steam users leaving reviews, where 0 would be all negative reviews and 1 would be all positive reviews. <br>
