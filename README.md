@@ -445,7 +445,7 @@ Figure 3. Example of processed games metdata (`games_df_processed`).
 ![image](https://github.com/user-attachments/assets/b1a3c132-648c-4f1a-8d44-d1d0d07d1f48)
 Figure 4. Example of processed reviews (`reviews_embeddings_df`).
 ### 3.c. Data Exploration
-![image](https://github.com/user-attachments/assets/bcdba426-8c36-4b5e-89e5-91bb521bd02a)
+![image](https://github.com/user-attachments/assets/bcdba426-8c36-4b5e-89e5-91bb521bd02a) <br>
 Figure 5. Summary Statistics
 ![Untitled](https://github.com/user-attachments/assets/9b1724b5-0774-4dbb-b592-1184475db7f4)
 Figure 6. Monthly Review Volume Over Time
