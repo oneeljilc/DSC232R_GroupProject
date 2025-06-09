@@ -175,7 +175,8 @@ print(f"Number of Unique Reviewers: {num_unique_reviewers}")
 print("Date Range of Reviews: ")
 reviews_df_processed_metadata.select(f.min("timestamp_created").alias("earliest_review"),
                                      f.max("timestamp_created").alias("latest_review")).show()
-
+```
+```
 # Review Volume Over Time
 # Reduce data to pandas dataframe
 reviews_by_month = reviews_df_processed_metadata.withColumn("year_month", f.date_format("timestamp_created", "yyyy-MM"))
@@ -190,7 +191,8 @@ plt.ylabel("Number of Reviews")
 plt.title("Monthly Review Volume Over Time")
 plt.tight_layout()
 plt.show()
-
+```
+```
 # Plot Most-Reviewed Games (Top 10) - Bar Chart
 # Reduce data to pandas dataframe
 review_counts = reviews_df_processed_metadata.groupBy("appid").count()
@@ -206,7 +208,8 @@ plt.xlabel("Game")
 plt.ylabel("Number of Reviews")
 plt.tight_layout()
 plt.show()
-
+```
+```
 # Plot Most Prolific Reviewers (Top 10) - Bar Chart
 # Reduce data to pandas dataframe
 reviewer_counts = reviews_df_processed_metadata.groupBy("author_steamid").count()
@@ -221,7 +224,8 @@ plt.xlabel("Author's Steam ID")
 plt.ylabel("Number of Reviews")
 plt.tight_layout()
 plt.show()
-
+```
+```
 # Top 10 Best & Worst Reviewed Games
 # Reduce data to pandas dataframe
 review_stats = reviews_df_processed_metadata.withColumn("positive_review", f.col("positive_review").cast("integer")) \
@@ -258,7 +262,8 @@ plt.xlabel("Game")
 plt.ylabel("Proportion of Positive Reviews")
 plt.tight_layout()
 plt.show()
-
+```
+```
 # Positivity Rate vs. Playtime at Time of Review
 # Reduce data to pandas dataframe
 reviews_binned = reviews_df_processed_metadata.withColumn("playtime_bin", f.floor(f.col("author_playtime_at_review") / 100) * 100)
@@ -282,10 +287,68 @@ plt.tight_layout()
 plt.show()
 ```
 ### 2.d. Model #1 - Simple Recommender System
+The first model employs K-Means to cluster games into 10 groups using the average vectorized reviews. Then it uses the averaged vectorized reviews of the authors to assign them to a cluster (AKA gaming persona).
+```
+# Cluster games based on review embeddings by game
+from pyspark.ml.clustering import KMeans
+
+kmeans = KMeans(k=10, seed=96, featuresCol='vectorized_reviews_by_game', predictionCol='game_cluster')
+kmeans_model = kmeans.fit(game_features_df)
+games_with_persona = kmeans_model.transform(game_features_df)
+games_with_persona.show(5)
+```
+```
+# Assign Users to Personas
+import numpy as np
+from pyspark.sql.functions import udf
+from pyspark.sql.types import IntegerType
+
+centroids = kmeans_model.clusterCenters()
+
+def closest_cluster(vec):
+  vec = np.array(vec)
+  sims = [np.dot(vec, np.array(c)) / (np.linalg.norm(vec) * np.linalg.norm(c) + 1e-9) for c in centroids]
+  return int(np.argmax(sims))
+
+closest_cluster_udf = udf(closest_cluster, IntegerType())
+author_with_persona = author_features_df.withColumn("persona", closest_cluster_udf("vectorized_reviews_by_author"))
+```
+The clusters are then reduced using t-SNE and visualized using the following code.
+```
+# Visual games by cluster/persona
+X = np.vstack(games_with_personas_pd['review_embedding_array'].values)
+
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
+X_tsne = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(X)
+games_with_personas_pd["x"] = X_tsne[:, 0]
+games_with_personas_pd['y'] = X_tsne[:, 1]
+
+plt.figure(figsize=(10,7))
+scatter = plt.scatter(games_with_personas_pd['x'], games_with_personas_pd['y'], c=games_with_personas_pd["game_cluster"], cmap="tab10", alpha=0.6)
+plt.title("t-SNE Projection of Games by Cluster/Persona")
+plt.xlabel("t-SNE 1")
+plt.ylabel("t-SNE 2")
+plt.colorbar(scatter, label="Cluster")
+plt.show()
+```
+```
+authors_with_personas_pd_ds = authors_with_personas_pd.sample(n=100, random_state=42)
+X2 = np.vstack(authors_with_personas_pd_ds['review_embedding_array'].values)
+X2_tsne = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(X2)
+authors_with_personas_pd_ds['x'] = X2_tsne[:, 0]
+authors_with_personas_pd_ds['y'] = X2_tsne[:, 1]
+
+plt.figure(figsize=(10,7))
+scatter = plt.scatter(authors_with_personas_pd_ds['x'], authors_with_personas_pd_ds['y'], c=authors_with_personas_pd_ds["persona"], cmap="tab10", alpha=0.6)
+plt.title("t-SNE Projection of Authors by Cluster/Persona")
+plt.xlabel("t-SNE 1")
+plt.ylabel("t-SNE 2")
+plt.colorbar(scatter, label="Cluster")
+plt.show()
+```
 ### 2.e. Model #2 - Predicting a Game's Popularity
-The goal of the first model is to predict a game's popularity with Steam users using other provided metadata about the game. For this model, popularity is the `positive_ratio` of the game amongst Steam users leaving reviews, where 0 would be all negative reviews and 1 would be all positive reviews. <br>
-First, feature engineering is performed in order to prepare the data for machine learning. This involves casting boolean features to integers, aggregating review data by game, and joining specified columns from the games metadata dataframe and the vectorized reviews. In this process, null values were identified which would cause an error when training a model; therefore, they are replaced with 0's. Finally, an `assembler` is established that will combine the numeric columns and vectorized reviews into a single `features` vector. <br>
-In the final section of this code, a Random Forest Regressor model is established, trained on a subset of the data (~80%), and tested on the remaining witheld data (~20%). While the RMSE value of 0.1974 on a scale of 0-1 doesn't seem too bad, an R^2 value of 0.1136 indicates that the model is performing quite poorly and further development is needed.
 ## 3. Results
 ### 3.a. Data Exploration
 ### 3.b. PreProcessing
@@ -301,6 +364,9 @@ The `reviews_df_processed_reviews` spark dataframe contains only the unique iden
 An analysis of the processed dataframes shows that there are 49,606,243 reviews spanning 96,042 games, written by 15,314,376 unique reviewers. Additionally, the reviews span a period of time from October 15, 2010 to November 3, 2023. A plot of "Monthly Review Volume Over Time" shows that the majority of reviews are from the last 4 years of this timeframe. A bar plot shows the "Top 10 Most Reviewed Games" of which the #1 most reviewed game, "Counter-Strike 2" has 4x more reviews than the #2 most reviewed game. A bar plot of the "Most Prolific Reviewers" shows that the #1 reviewer has reviewed almost 6,000 games. In the next exploratory plots, the `positive_review` tag (which is a boolean indicating whether or not the review was positive) is used to calculate "Proportion of Positive Reviews" for each game. Games with less than 10,000 reviews are filtered out so as not to skew that data and the "Top 10 Best Games" and "Top 10 Worst Games" are displayed in bar plots. Finally, a plot of the proportions of reviews that were positive and the author's playtime at the time of review are plotted for a subset of 500 games. Interestingly, games with the lowest proportion of positive reviews tend to have lower playtime by the review author at the time of review. This could mean that games are getting "review bombed" by people who haven't even played the game or it could also mean that people don't tend to play a game for very long before giving it a poor review.
 ### 3.d. Model #1 - Simple Recommender System
 ### 3.e. Model #2 - Predicting a Game's Popularity
+The goal of the first model is to predict a game's popularity with Steam users using other provided metadata about the game. For this model, popularity is the `positive_ratio` of the game amongst Steam users leaving reviews, where 0 would be all negative reviews and 1 would be all positive reviews. <br>
+First, feature engineering is performed in order to prepare the data for machine learning. This involves casting boolean features to integers, aggregating review data by game, and joining specified columns from the games metadata dataframe and the vectorized reviews. In this process, null values were identified which would cause an error when training a model; therefore, they are replaced with 0's. Finally, an `assembler` is established that will combine the numeric columns and vectorized reviews into a single `features` vector. <br>
+In the final section of this code, a Random Forest Regressor model is established, trained on a subset of the data (~80%), and tested on the remaining witheld data (~20%). While the RMSE value of 0.1974 on a scale of 0-1 doesn't seem too bad, an R^2 value of 0.1136 indicates that the model is performing quite poorly and further development is needed.
 ## 4. Discussion
 ### 4.a. Data Exploration
 ### 4.b. PreProcessing
