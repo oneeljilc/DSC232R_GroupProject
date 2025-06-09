@@ -5,7 +5,7 @@ This project contains code developed for the Spring 2025 DSC232R Group Project.
 The [“100 Million+ Steam Reviews”](https://www.kaggle.com/datasets/kieranpoc/steam-reviews/data) dataset contains over 113 million reviews submitted by users of the PC games digital distribution platform, Steam. This platform allows users to purchase, download, and play PC video games, as well as engage in community activities such as leaving reviews/ratings. This dataset contains complete review text as well as rich metadata about the reviews and their authors. This dataset is combined with the ["Steam Games"](https://www.kaggle.com/datasets/artermiloff/steam-games-dataset) dataset which contains additional metadata about the games themselves (such as name, release date, price, genre, etc.). This dataset was chosen for the DSC232R Group Project because the team members are avid users of Steam and have a personal connection and interest in the subject matter. Additionally, while various lectures in the Data Science degree program have touched on applications related to consumer products, there has not been an assignment or project yet that addresses this topic. In general, analysis of product reviews and product performance data can be used to create models that support product development, marketing, and overall customer insights. For example, a good predictive machine learning model can dynamically price products based on demand, evaluate the effectiveness of an ad campaign, and provide tailored recommendations, among other uses.
 ## 2. Methods
 ### 2.a. Data Importing
-The “100 Million+ Steam Reviews” dataset is provided as a .zip file (containing a .csv file) and the "Steam Games" dataset is provided as a .csv file. For ease of use, files were downloaded from Kaggle and uploaded to Google Cloud Storage, where they are accessible via a public url. The following code downloads the files: <br>
+The “100 Million+ Steam Reviews” dataset is provided as a .zip file (containing a .csv file) and the "Steam Games" dataset is provided as a .csv file. For ease of use, files were downloaded from Kaggle and uploaded to Google Cloud Storage, where they are accessible via a public url. The following code downloads the files and saves them as spark dataframes. See the attached notebook for the environment set-up and other specific implementation details. <br>
 ```
 url1 = ("https://storage.googleapis.com/dsc232r-group-project-data/steam-reviews.zip")
 !wget "{url1}"
@@ -13,6 +13,9 @@ url1 = ("https://storage.googleapis.com/dsc232r-group-project-data/steam-reviews
 url2 = ("https://storage.googleapis.com/dsc232r-group-project-data/games.csv")
 !wget "{url2}"
 !mv games.csv /home/joneel/joneel/Group_Project/raw_data
+
+reviews_df = sc.read.csv("reviews.csv", header=True, inferSchema=True)
+games_df = sc.read.csv("games.csv", header=True, inferSchema=True)
 ```
 # Moves games.csv into specified directory
 !mv games.csv /home/joneel/joneel/Group_Project/raw_data
