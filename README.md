@@ -435,13 +435,15 @@ Data was successfully imported into spark data frames using the above code.
 #### 3.b.i. Dataset #1: Steam Reviews
 Example of processed review metadata (`reviews_df_processed_metadata`).
 ![image](https://github.com/user-attachments/assets/35ee6e3b-24cb-4f24-b18f-2aefe1913043)
-Example of processed reviews (`reviews_embeddings_df`).
-![image](https://github.com/user-attachments/assets/b1a3c132-648c-4f1a-8d44-d1d0d07d1f48)
 #### 3.b.ii. Dataset #2: Steam Games
+Example of processed games metadata (`games_df_processed`).
+![image](https://github.com/user-attachments/assets/ff4d483f-c2ba-4e05-974c-f386004e6a2d)
 #### 3.b.iii. Verifying the Compatability of the Datasets
 Example of processed games metdata (`games_df_processed`).
 ![image](https://github.com/user-attachments/assets/09714b9a-110d-4d5c-9a38-06f813810120)
 #### 3.b.iv. Text Processing.
+Example of processed reviews (`reviews_embeddings_df`).
+![image](https://github.com/user-attachments/assets/b1a3c132-648c-4f1a-8d44-d1d0d07d1f48)
 ### 3.c. Data Exploration
 An analysis of the processed dataframes shows that there are 49,606,243 reviews spanning 96,042 games, written by 15,314,376 unique reviewers. Additionally, the reviews span a period of time from October 15, 2010 to November 3, 2023. A plot of "Monthly Review Volume Over Time" shows that the majority of reviews are from the last 4 years of this timeframe. A bar plot shows the "Top 10 Most Reviewed Games" of which the #1 most reviewed game, "Counter-Strike 2" has 4x more reviews than the #2 most reviewed game. A bar plot of the "Most Prolific Reviewers" shows that the #1 reviewer has reviewed almost 6,000 games. In the next exploratory plots, the `positive_review` tag (which is a boolean indicating whether or not the review was positive) is used to calculate "Proportion of Positive Reviews" for each game. Games with less than 10,000 reviews are filtered out so as not to skew that data and the "Top 10 Best Games" and "Top 10 Worst Games" are displayed in bar plots. Finally, a plot of the proportions of reviews that were positive and the author's playtime at the time of review are plotted for a subset of 500 games. Interestingly, games with the lowest proportion of positive reviews tend to have lower playtime by the review author at the time of review. This could mean that games are getting "review bombed" by people who haven't even played the game or it could also mean that people don't tend to play a game for very long before giving it a poor review.
 ### 3.d. Model #1 - Simple Recommender System
