@@ -68,6 +68,35 @@ reviews_df_processed_metadata = reviews_df_processed.drop("review")
 reviews_df_processed_reviews = reviews_df_processed.select("recommendationid", "appid", "author_steamid", "review")
 ```
 #### 2.b.ii. Dataset #2: Steam Games
+The following preprocessing was done on the `games_df`. In general, this involved droping nulls/duplicates and casting to the correct data types per the Kaggle documentaiton.
+```
+# Removes columns not relevant for this analysis
+games_df_processed = games_df.drop("reviews", "header_image", "website", "support_url", "support_email", "full_audio_languages", "screenshots", "movies",
+                                  "required_age", "metacritic_url", "supported_languages", "packages", "score_rank", "discount")
+games_df_processed = games_df_processed.na.drop(subset=["appid"])
+games_df_processed = games_df_processed.dropDuplicates(subset=["appid"])
+games_df_processed = games_df_processed.withColumn("release_date", f.to_timestamp("release_date", "yyyy-MM-dd"))
+games_df_processed = games_df_processed.withColumn("price", f.col("price").cast("double"))
+games_df_processed = games_df_processed.withColumn("dlc_count", f.col("dlc_count").cast("integer"))
+games_df_processed = games_df_processed.withColumn("windows", f.col("windows").cast("boolean"))
+games_df_processed = games_df_processed.withColumn("mac", f.col("mac").cast("boolean"))
+games_df_processed = games_df_processed.withColumn("linux", f.col("linux").cast("boolean"))
+games_df_processed = games_df_processed.withColumn("metacritic_score", f.col("metacritic_score").cast("double"))
+games_df_processed = games_df_processed.withColumn("achievements", f.col("achievements").cast("integer"))
+games_df_processed = games_df_processed.withColumn("recommendations", f.col("recommendations").cast("integer"))
+games_df_processed = games_df_processed.withColumn("user_score", f.col("user_score").cast("integer"))
+games_df_processed = games_df_processed.withColumn("positive", f.col("positive").cast("integer"))
+games_df_processed = games_df_processed.withColumn("negative", f.col("negative").cast("integer"))
+games_df_processed = games_df_processed.withColumn("average_playtime_forever", f.col("average_playtime_forever").cast("integer"))
+games_df_processed = games_df_processed.withColumn("average_playtime_2weeks", f.col("average_playtime_2weeks").cast("integer"))
+games_df_processed = games_df_processed.withColumn("median_playtime_forever", f.col("median_playtime_forever").cast("integer"))
+games_df_processed = games_df_processed.withColumn("median_playtime_2weeks", f.col("median_playtime_2weeks").cast("integer"))
+games_df_processed = games_df_processed.withColumn("pct_pos_total", f.col("pct_pos_total").cast("integer"))
+games_df_processed = games_df_processed.withColumn("peak_ccu", f.col("peak_ccu").cast("integer"))
+games_df_processed = games_df_processed.withColumn("num_reviews_total", f.col("num_reviews_total").cast("integer"))
+games_df_processed = games_df_processed.withColumn("pct_pos_recent", f.col("pct_pos_recent").cast("integer"))
+games_df_processed = games_df_processed.withColumn("num_reviews_recent", f.col("num_reviews_recent").cast("integer"))
+```
 #### 2.b.iii. Verifying the Compatability of the Datasets
 While both of these datasets claim to use Steam's API to generate the data, they come from entirely different Kaggle contributors. We would like to combine the two datasets on the shared unique identifier for a game (`appid`), but a check is needed to verify that the `appid` values in each dataset are the same. Therefore the datasets are joined on `appid` and the `game` column from the reviews dataset is compared to the `name` column from the games dataset for a subset of entries. While there are some small differences in capitalization and exact wording, the subset appears to match and so we can trust that the `appid` columns in each dataset are compatible. For simplification, the `game` column is dropped from the reviews dataframe and only the `name` column from the games dataframe will be used moving forward.
 #### 2.b.iv. Text Processing
