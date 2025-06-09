@@ -460,6 +460,44 @@ Figure 10. Top 10 Worst Reviewed Games <br>
 ![Untitled](https://github.com/user-attachments/assets/4799a8ea-8abf-43f2-ba55-d6598c5d7b20)
 Figure 11. Positivity Rate vs. Playtime at Review <br>
 ### 3.d. Model #1 - Simple Recommender System
+![Untitled](https://github.com/user-attachments/assets/c0f142cd-b3a4-422c-b6f3-dfbb6908a875)
+Figure 12. Game Cluster Visualization <br>
+![Untitled](https://github.com/user-attachments/assets/05044eda-30e6-45bd-945e-5a3f37a06071)
+Figure 13. Author Cluster Visualization <br>
+|index|game\_cluster|game\_count|games\_in\_cluster|
+|---|---|---|---|
+|0|0|1|\['Factorio'\]|
+|1|1|1|\['The Elder Scrolls V: Skyrim'\]|
+|2|2|15|\['The Witcher 3: Wild Hunt' 'Undertale' 'NieR:Automata™'
+ 'Halo: The Master Chief Collection' 'Persona 4 Golden' 'ELDEN RING'
+ 'Subnautica' 'Hollow Knight'
+ 'Divinity: Original Sin 2 - Definitive Edition' 'Half-Life: Alyx'
+ 'DARK SOULS™: REMASTERED' 'Sekiro™: Shadows Die Twice - GOTY Edition'
+ "Baldur's Gate 3" 'OMORI' 'Red Dead Redemption 2'\]|
+|3|3|25|\["Garry's Mod" 'Terraria' 'Euro Truck Simulator 2' 'Warframe'
+ 'Europa Universalis IV' 'Cities: Skylines' "No Man's Sky" 'BeamNG\.drive'
+ 'ARK: Survival Evolved' 'Satisfactory' 'Beat Saber' 'Destiny 2'
+ 'Titanfall® 2' 'Arma 3' 'Kerbal Space Program' 'Path of Exile'
+ 'Rocket League®' 'Stellaris' 'Tabletop Simulator' 'Blender' 'Fallout 4'
+ 'Slime Rancher' 'The Elder Scrolls V: Skyrim Special Edition'
+ 'PUBG: BATTLEGROUNDS' 'Battlefield™ 2042'\]|
+|4|4|1|\['Doki Doki Literature Club\!'\]|
+|5|5|5|\['Call of Duty®: Black Ops' 'Call of Duty®: Black Ops III' 'The Sims™ 4'
+ 'The Sims™ 3' 'Call of Duty®: Black Ops II'\]|
+|6|6|20|\['Team Fortress 2' 'DayZ' 'War Thunder' 'Grand Theft Auto V Legacy'
+ 'RimWorld' 'FOR HONOR™' 'Stardew Valley' 'VRChat' 'Crush Crush'
+ 'Counter-Strike: Source' 'Counter-Strike 2' 'PAYDAY 2'
+ 'Getting Over It with Bennett Foddy' "Don't Starve Together"
+ 'NEKOPARA Vol\. 1' 'HuniePop' "Tom Clancy's Rainbow Six® Siege"
+ 'Dead by Daylight' 'Hearts of Iron IV'
+ '5D Chess With Multiverse Time Travel'\]|
+|7|7|20|\['Papers, Please' 'Rust' "Five Nights at Freddy's" 'DOOM' 'Squad'
+ 'Risk of Rain 2' 'Bloons TD 6' 'ULTRAKILL' 'Project Zomboid' 'Kenshi'
+ 'METAL GEAR RISING: REVENGEANCE' 'The Forest' 'Garfield Kart'
+ 'Deep Rock Galactic' 'Blade and Sorcery' 'Yakuza 0' 'Phasmophobia'
+ 'People Playground' 'Sea of Thieves: 2024 Edition' 'Walking Simulator'\]|
+|8|8|2|\['Helltaker' 'Wallpaper Engine'\]|
+|9|9|1|\['I Love You, Colonel Sanders\! A Finger Lickin’ Good Dating Simulator'\]|
 ### 3.e. Model #2 - Predicting a Game's Popularity
 ## 4. Discussion
 ### 4.a. Data Exploration
