@@ -446,19 +446,19 @@ Figure 3. Example of processed games metdata (`games_df_processed`).
 Figure 4. Example of processed reviews (`reviews_embeddings_df`).
 ### 3.c. Data Exploration
 ![image](https://github.com/user-attachments/assets/bcdba426-8c36-4b5e-89e5-91bb521bd02a) <br>
-Figure 5. Summary Statistics
+Figure 5. Summary Statistics <br>
 ![Untitled](https://github.com/user-attachments/assets/9b1724b5-0774-4dbb-b592-1184475db7f4)
-Figure 6. Monthly Review Volume Over Time
+Figure 6. Monthly Review Volume Over Time <br>
 ![Untitled](https://github.com/user-attachments/assets/7a4afcb8-b883-42fb-9904-e7d08a259f65)
-Figure 7. Top 10 Most Reviewed Games
+Figure 7. Top 10 Most Reviewed Games <br>
 ![Untitled](https://github.com/user-attachments/assets/2f39e0b6-4108-446d-a47f-da2e8275f062)
-Figure 8. Top 10 Most Prolific Reviewers
+Figure 8. Top 10 Most Prolific Reviewers <br>
 ![Untitled](https://github.com/user-attachments/assets/5083f6e3-2fa3-4795-acb8-5d24edb5a8a3)
-Figure 9. Top 10 Best Reviewed Games
+Figure 9. Top 10 Best Reviewed Games <br>
 ![Untitled](https://github.com/user-attachments/assets/6ecf1f42-eea7-465d-8b2f-4a1dfa2d0d85)
-Figure 10. Top 10 Worst Reviewed Games
+Figure 10. Top 10 Worst Reviewed Games <br>
 ![Untitled](https://github.com/user-attachments/assets/4799a8ea-8abf-43f2-ba55-d6598c5d7b20)
-Figure 11. Positivity Rate vs. Playtime at Review
+Figure 11. Positivity Rate vs. Playtime at Review <br>
 ### 3.d. Model #1 - Simple Recommender System
 ### 3.e. Model #2 - Predicting a Game's Popularity
 ## 4. Discussion
