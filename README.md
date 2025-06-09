@@ -349,6 +349,85 @@ plt.colorbar(scatter, label="Cluster")
 plt.show()
 ```
 ### 2.e. Model #2 - Predicting a Game's Popularity
+The second model uses a Random Forest Regressor to try to predict a game's popularity based on the reviews and game metadata. For this model, popularity is the positive_ratio of the game amongst Steam users leaving reviews, where 0 is all negative reviews and 1 is all positive reviews.
+```
+# Cast boolean features in the "reviews metadata" data frame to integer
+review_pop_pred = reviews_df_processed_metadata.withColumn("positive_review", f.col("positive_review").cast("integer"))
+review_pop_pred = review_pop_pred.withColumn("steam_purchase", f.col("steam_purchase").cast("integer"))
+
+# Group the reviews metadata by game (app id) and aggregate specified features
+review_pop_pred = review_pop_pred.groupBy("appid").agg(
+                        f.avg("positive_review").alias("positive_ratio"),
+                        f.avg("author_playtime_at_review").alias("avg_playtime_at_review"),
+                        f.avg("steam_purchase").alias("steam_purchase_ratio"),
+                        f.count("*").alias("total_reviews")
+                    )
+# Filter out games that have less than 100 reviews
+review_pop_pred = review_pop_pred.filter("total_reviews >= 100")
+
+# Join the review metadata with specified games metadata
+review_pop_pred = review_pop_pred.join(games_df_processed.select("appid", "price", "metacritic_score", "dlc_count","average_playtime_forever", "median_playtime_forever",
+                                                                 "peak_ccu"), on="appid", how="left")
+
+# Join the metadata with the vectorized reviews
+ML_df = review_pop_pred.join(game_features_df.select("appid", "vectorized_reviews_by_game"), on="appid", how="left")
+
+# Combine features into single "features" vector
+numeric_cols = ['avg_playtime_at_review', 'steam_purchase_ratio', 'total_reviews', 'price', 'metacritic_score', 'dlc_count',
+                'average_playtime_forever', 'median_playtime_forever', 'peak_ccu']
+
+# Handle Nulls
+from pyspark.ml.linalg import Vectors, VectorUDT
+from pyspark.sql.functions import when, udf
+
+for c in numeric_cols:
+    ML_df = ML_df.withColumn(c, when(col(c).isNull(), 0).otherwise(col(c)))
+
+@udf(VectorUDT())
+def zero_vector_udf():
+    return Vectors.dense([0.0] * 50)
+
+ML_df = ML_df.withColumn("vectorized_reviews_by_game",
+                         when(col("vectorized_reviews_by_game").isNull(), zero_vector_udf()).otherwise(col("vectorized_reviews_by_game")))
+# Assemble Numeric Columns and Vector into a single features vector
+assembler = VectorAssembler(
+    inputCols=numeric_cols + ['vectorized_reviews_by_game'], outputCol='features'
+)
+
+# Establish Random Forest Regressor
+rf = RandomForestRegressor(
+    featuresCol='features',
+    labelCol='positive_ratio',
+    predictionCol='prediction',
+    numTrees=100,
+    maxDepth=10,
+    seed=96
+)
+# Establish ML pipeline
+pipeline = Pipeline(stages=[assembler, rf])
+
+# Split into training and test data
+train_data, test_data = ML_df.randomSplit([0.8, 0.2], seed=96)
+
+# Train model
+model = pipeline.fit(train_data)
+
+# Evaluate model
+predictions = model.transform(test_data)
+
+evaluator = RegressionEvaluator(
+    labelCol='positive_ratio',
+    predictionCol='prediction',
+    metricName='rmse'
+)
+
+rmse = evaluator.evaluate(predictions)
+r2 = RegressionEvaluator(labelCol='positive_ratio', predictionCol='prediction', metricName='r2').evaluate(predictions)
+
+print("RMSE: ", rmse)
+print("R^2 Score: ", r2)
+
+```
 ## 3. Results
 ### 3.a. Data Exploration
 ### 3.b. PreProcessing
