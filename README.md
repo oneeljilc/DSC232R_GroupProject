@@ -468,7 +468,7 @@ Figure 13. Author Cluster Visualization <br>
 Figure 14. Summary of Games in Each Cluster
 ### 3.e. Model #2 - Predicting a Game's Popularity
 ![image](https://github.com/user-attachments/assets/8d9e3164-00f1-4733-9771-c35f4617ab69)
-Figure 15. Inputs to Popularity Prediction Model (Result of Feature Engineering)
+Figure 15. Inputs to Popularity Prediction Model (Result of Feature Engineering) <br>
 ![image](https://github.com/user-attachments/assets/e6333265-de8e-4a4d-ae54-50219afacc11)
 Figure 16. RMSE and R-squared value for Random Forest Regressor model
 ## 4. Discussion
