@@ -100,7 +100,16 @@ games_df_processed = games_df_processed.withColumn("pct_pos_recent", f.col("pct_
 games_df_processed = games_df_processed.withColumn("num_reviews_recent", f.col("num_reviews_recent").cast("integer"))
 ```
 #### 2.b.iii. Verifying the Compatability of the Datasets
-
+The two datasets were evaulated to ensure compatability use the following code.
+```
+# Verify that appid's match between the two datasets
+joined = reviews_df_processed_metadata.select("appid", "game").alias("df1").join(
+    games_df_processed.select("appid", "name").alias("df2"), on="appid", how="inner").filter(
+    "df1.game != df2.name")
+joined.show()
+# Dropping the game name from the first dataset (100+ Million Reviews), will use the game name from the second dataset (Steam Games)
+reviews_df_processed_metadata = reviews_df_processed_metadata.drop("game")
+```
 #### 2.b.iv. Text Processing
 The `reviews_df_processed_reviews` spark dataframe contains only the unique identifiers for each review (`recommendation_id`, `appid`, and `author_steamid`) and the review text (`review`). A vectorized representation of the review text is needed for later machine learning tasks. Therefore, the dataset is filtered down to include only the top 100 most-reviewed games which includes over 19,000,000 reviews. Next, the reviews are tokenized, common english "stop words" are removed, and only reviews longer than 10 tokens are kept. This still totals over 19,000,000 reviews. Finally, a `Word2Vec` model is applied to transform the review text into vectors of size 50. Because this process takes a fair amount of time to run, the resulting `reviews_embeddings_df` containing the vectorized version of each review is saved as a parquet file and all subsequent analysis began by loading in this parquet file. From here, the review vectors are aggregated by game (`appid`) and author (`author_steamid`).
 ### 2.c. Data Exploration
