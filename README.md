@@ -22,5 +22,27 @@ An analysis of the processed dataframes shows that there are 49,606,243 reviews 
 The goal of the first model is to predict a game's popularity with Steam users using other provided metadata about the game. For this model, popularity is the `positive_ratio` of the game amongst Steam users leaving reviews, where 0 would be all negative reviews and 1 would be all positive reviews. <br>
 First, feature engineering is performed in order to prepare the data for machine learning. This involves casting boolean features to integers, aggregating review data by game, and joining specified columns from the games metadata dataframe and the vectorized reviews. In this process, null values were identified which would cause an error when training a model; therefore, they are replaced with 0's. Finally, an `assembler` is established that will combine the numeric columns and vectorized reviews into a single `features` vector. <br>
 In the final section of this code, a Random Forest Regressor model is established, trained on a subset of the data (~80%), and tested on the remaining witheld data (~20%). While the RMSE value of 0.1974 on a scale of 0-1 doesn't seem too bad, an R^2 value of 0.1136 indicates that the model is performing quite poorly and further development is needed.
-### Conclusions & Future Work
+## 3. Results
+### 3.a. Data Exploration
+### 3.b. PreProcessing
+#### 3.b.i. Dataset #1: Steam Reviews
+#### 3.b.ii. Dataset #2: Steam Games
+#### 3.b.iii. Verifying the Compatability of the Datasets
+#### 3.b.iv. Text Processing.
+### 3.c. Data Exploration
+### 3.d. Model #1 - Simple Recommender System
+### 3.e. Model #2 - Predicting a Game's Popularity
+## 4. Discussion
+### 4.a. Data Exploration
+### 4.b. PreProcessing
+#### 4.b.i. Dataset #1: Steam Reviews
+#### 4.b.ii. Dataset #2: Steam Games
+#### 4.b.iii. Verifying the Compatability of the Datasets
+#### 4.b.iv. Text Processing.
+### 4.c. Data Exploration
+### 4.d. Model #1 - Simple Recommender System
+### 4.e. Model #2 - Predicting a Game's Popularity
+## 5. Conclusion
 This first model attempt indicates that it may not be possible to predict game performance given the metadata we have access to; however, there is still room for trying to improve the model by including more features, trying a different model framework (i.e., XGBoost), and tuning the model parameters. In addition to trying to improve this predictive model, in Milestone 4, we will attempt to build a simple recommender system using clustering as this dataset may be more suited for unsupervised learning.
+## 6. Statement of Collaboration
+Jillian O'Neel - Project Lead - Responsible for all coordination, coding, and write-ups
