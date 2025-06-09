@@ -19,7 +19,7 @@ games_df = sc.read.csv("games.csv", header=True, inferSchema=True)
 ```
 ### 2.b. PreProcessing
 #### 2.b.i. Dataset #1: Steam Reviews
-The following post-processing was completed on the `reviews_df` spark dataframe.
+The following post-processing was completed on the `reviews_df` spark dataframe. In general, this involved dropping nulls/duplicates and casting to the correct datatypes per the Kaggle documentation.
 ```
 # Dropping columns not useful for analysis and nulls/duplicates
 reviews_df = reviews_df.drop("hidden_in_steam_china", "steam_china_location")
