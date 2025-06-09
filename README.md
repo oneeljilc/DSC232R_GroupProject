@@ -75,6 +75,8 @@ games_df_processed = games_df.drop("reviews", "header_image", "website", "suppor
                                   "required_age", "metacritic_url", "supported_languages", "packages", "score_rank", "discount")
 games_df_processed = games_df_processed.na.drop(subset=["appid"])
 games_df_processed = games_df_processed.dropDuplicates(subset=["appid"])
+
+# Cast to correct data types
 games_df_processed = games_df_processed.withColumn("release_date", f.to_timestamp("release_date", "yyyy-MM-dd"))
 games_df_processed = games_df_processed.withColumn("price", f.col("price").cast("double"))
 games_df_processed = games_df_processed.withColumn("dlc_count", f.col("dlc_count").cast("integer"))
