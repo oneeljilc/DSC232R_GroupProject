@@ -429,10 +429,14 @@ print("R^2 Score: ", r2)
 
 ```
 ## 3. Results
-### 3.a. Data Exploration
+### 3.a. Data Importing
+Data was successfully imported into spark data frames using the above code.
 ### 3.b. PreProcessing
 #### 3.b.i. Dataset #1: Steam Reviews
-On the `reviews_df` spark dataframe, `.printSchema()` is used to explore the features provided for each review and a count of all reviews is taken. There are two columns related to the Chinese gaming market that won't be useful for this analyis so they are removed using `.drop`. Additionally, it is identified that the dataset contains reviews in many different languages. For the purposes of this work, English language text analysis will be performed on the reviews; therefore, the data is filtered to include only the reviews in English and a new count is taken. Next, there are three unique identifier attributes that are vital for the analysis as well as the review itself. Rows with nulls values in any of these columns are dropped and rows with duplicate `recommendationid` values are also dropped. Upon review, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to their appropriate datatypes. A brief analysis of the time related attributes indicated some incorrect dates so any rows containing `timestamp` values older than the launch date of Steam (September 12, 2003) are removed. Finally the processed reviews dataframe is split into two dataframes: one containing all of the metadata (`reviews_df_processed_metadata`) and one containing only the unique identifiers for the review and game plus the review (`reviews_df_processed_reviews`). Future work will include processing the reviews for Natural Language Processing (NLP).
+Example of processed review metadata (`reviews_df_processed_metadata`).
+![image](https://github.com/user-attachments/assets/35ee6e3b-24cb-4f24-b18f-2aefe1913043)
+Example of processed games metdata (`games_df_processed`).
+![image](https://github.com/user-attachments/assets/09714b9a-110d-4d5c-9a38-06f813810120)
 #### 3.b.ii. Dataset #2: Steam Games
 On the `games_df` spark dataframe, `.printSchema()` is used to explore the features provided for each game and a count of all games is taken. For this analysis, we will only be using game metadata that describes the type of game; therefore many columns not relevant are dropped. Additionally, any rows with null values or duplicate values in the unique identifier for the game (e.g., `appid`) are removed. Just like the review dataframe, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to the correct datatypes.
 #### 3.b.iii. Verifying the Compatability of the Datasets
@@ -450,6 +454,7 @@ In the final section of this code, a Random Forest Regressor model is establishe
 ### 4.a. Data Exploration
 ### 4.b. PreProcessing
 #### 4.b.i. Dataset #1: Steam Reviews
+On the `reviews_df` spark dataframe, `.printSchema()` is used to explore the features provided for each review and a count of all reviews is taken. There are two columns related to the Chinese gaming market that won't be useful for this analyis so they are removed using `.drop`. Additionally, it is identified that the dataset contains reviews in many different languages. For the purposes of this work, English language text analysis will be performed on the reviews; therefore, the data is filtered to include only the reviews in English and a new count is taken. Next, there are three unique identifier attributes that are vital for the analysis as well as the review itself. Rows with nulls values in any of these columns are dropped and rows with duplicate `recommendationid` values are also dropped. Upon review, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to their appropriate datatypes. A brief analysis of the time related attributes indicated some incorrect dates so any rows containing `timestamp` values older than the launch date of Steam (September 12, 2003) are removed. Finally the processed reviews dataframe is split into two dataframes: one containing all of the metadata (`reviews_df_processed_metadata`) and one containing only the unique identifiers for the review and game plus the review (`reviews_df_processed_reviews`). Future work will include processing the reviews for Natural Language Processing (NLP).
 #### 4.b.ii. Dataset #2: Steam Games
 #### 4.b.iii. Verifying the Compatability of the Datasets
 #### 4.b.iv. Text Processing.
