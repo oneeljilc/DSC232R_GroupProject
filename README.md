@@ -435,6 +435,8 @@ Data was successfully imported into spark data frames using the above code.
 #### 3.b.i. Dataset #1: Steam Reviews
 Example of processed review metadata (`reviews_df_processed_metadata`).
 ![image](https://github.com/user-attachments/assets/35ee6e3b-24cb-4f24-b18f-2aefe1913043)
+Example of processed reviews (`reviews_embeddings_df`).
+![image](https://github.com/user-attachments/assets/b1a3c132-648c-4f1a-8d44-d1d0d07d1f48)
 #### 3.b.ii. Dataset #2: Steam Games
 On the `games_df` spark dataframe, `.printSchema()` is used to explore the features provided for each game and a count of all games is taken. For this analysis, we will only be using game metadata that describes the type of game; therefore many columns not relevant are dropped. Additionally, any rows with null values or duplicate values in the unique identifier for the game (e.g., `appid`) are removed. Just like the review dataframe, many of the columns were imported as strings so the definitions in Kaggle are used to cast the mismatched columns to the correct datatypes.
 #### 3.b.iii. Verifying the Compatability of the Datasets
